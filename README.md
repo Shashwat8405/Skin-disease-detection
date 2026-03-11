@@ -15,11 +15,7 @@
 
 ---
 
-## 📸 Screenshots
 
-| Step 1 — Connect Sensor | Step 2 — Capture Photo | Step 3 — Health Score | Step 4 — Results |
-|:-:|:-:|:-:|:-:|
-| ![Sensor](screenshots/step1_sensor.png) | ![Photo](screenshots/step2_photo.png) | ![Score](screenshots/step3_score.png) | ![Results](screenshots/step4_results.png) |
 
 > *Detected: Fungal Infection (51.6% confidence) · Health Score: 34/100 · Grade: F (Critical)*
 
