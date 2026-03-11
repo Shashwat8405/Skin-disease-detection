@@ -3,12 +3,14 @@
 > **Real-time skin disease detection using ESP32 BLE sensors + MobileNetV2 deep learning, accessible entirely from a smartphone browser — no app install required.**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10-blue?logo=python&logoColor=white"/>
-  <img src="https://img.shields.io/badge/TensorFlow-2.10-orange?logo=tensorflow&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Flask-2.3-lightgrey?logo=flask&logoColor=black"/>
-  <img src="https://img.shields.io/badge/ESP32-BLE%204.2-red?logo=espressif&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Accuracy-88%25-brightgreen"/>
-  <img src="https://img.shields.io/badge/Hardware%20Cost-₹1%2C100-yellow"/>
+<img width="1919" height="975" alt="Screenshot 2026-03-12 002633" src="https://github.com/user-attachments/assets/262b5d29-b288-45a9-b4b1-13fe98079fe4" />
+<img width="1916" height="979" alt="Screenshot 2026-03-12 002655" src="https://github.com/user-attachments/assets/30c712b0-563d-4ef7-a676-69371626adfa" />
+<img width="1919" height="979" alt="Screenshot 2026-03-12 002711" src="https://github.com/user-attachments/assets/917b02c5-1061-4d51-b94f-5b6a44f42abd" />
+<img width="1919" height="979" alt="Screenshot 2026-03-12 002724" src="https://github.com/user-attachments/assets/58339db5-a446-49d8-a001-329442b7c217" />
+
+
+
+
 </p>
 
 ---
@@ -114,82 +116,13 @@ Score = clamp(B + C + T + R, 0, 100)
 
 ---
 
-## ⚙️ Hardware
 
-| Component | Role | Cost |
-|-----------|------|------|
-| ESP32 DevKit v1 | BLE GATT server + I²C master | ₹300 |
-| MLX90614 IR Sensor | Non-contact skin temperature (±0.5°C) | ₹450 |
-| TCS34725 Color Sensor | RGB redness index (16-bit RGBC) | ₹350 |
-| **Total** | | **₹1,100** |
 
 **Wiring:** Both sensors share I²C (SDA: GPIO21, SCL: GPIO22) with 4.7 kΩ pull-ups to 3.3 V.
 
 ---
 
-## 🚀 Quick Start
 
-### 1. Clone & install dependencies
-```bash
-git clone https://github.com/yourusername/skin-analysis
-cd skin-analysis
-pip install flask flask-cors tensorflow pillow numpy
-```
-
-### 2. Place your model
-```
-skin_analyzer/
-├── app.py
-├── skin_disease_model.h5    ← your trained model
-├── class_labels.txt         ← acne, eczema, fungal, normal
-└── templates/
-      └── index.html
-```
-
-### 3. Run the server
-```bash
-cd skin_analyzer
-python app.py
-# Server starts at http://0.0.0.0:5000
-```
-
-### 4. Allow firewall (Windows)
-```powershell
-# Run as Administrator
-netsh advfirewall firewall add rule name="Flask 5000" dir=in action=allow protocol=TCP localport=5000
-```
-
-### 5. Open on your phone
-Open **Chrome for Android** and navigate to `http://<your-pc-ip>:5000`
-*(Both devices must be on the same Wi-Fi network)*
-
-### 6. Flash ESP32 (optional)
-Open `esp32/skin_sensor_ble/skin_sensor_ble.ino` in Arduino IDE and flash to your ESP32.
-
----
-
-## 📁 Project Structure
-
-```
-skin-analysis/
-├── skin_analyzer/
-│   ├── app.py                  # Flask REST server + inference logic
-│   ├── skin_disease_model.h5   # Trained MobileNetV2 model
-│   ├── class_labels.txt        # Class names
-│   └── templates/
-│       └── index.html          # Single-page browser app (Web Bluetooth + UI)
-├── esp32/
-│   └── skin_sensor_ble/
-│       └── skin_sensor_ble.ino # ESP32 BLE GATT firmware
-├── screenshots/
-│   ├── step1_sensor.png
-│   ├── step2_photo.png
-│   ├── step3_score.png
-│   └── step4_results.png
-└── README.md
-```
-
----
 
 ## 🔌 API Reference
 
@@ -220,14 +153,7 @@ skin-analysis/
 
 ---
 
-## 📱 Browser Compatibility
 
-| Browser | BLE Support | Recommended |
-|---------|------------|-------------|
-| Chrome for Android | ✅ | ✅ Yes |
-| Chrome Desktop | ✅ | ✅ Yes |
-| Firefox | ❌ | ✗ No |
-| Safari / iOS | ❌ | ✗ No |
 
 ---
 
@@ -243,7 +169,7 @@ skin-analysis/
 
 ## 📄 Publication
 
-This project was submitted as a B.Tech final year project (Electronics & Telecommunication Engineering, KIIT University) and as an IEEE conference paper:
+This project was submitted as a B.Tech final year project (Electronics & Computer Science Engineering, KIIT University) and as an IEEE conference paper:
 
 > *"IoT-Integrated Skin Disease Detection and Health Scoring Using MobileNetV2 Deep Learning"*
 > 2025 IEEE International Conference on Electronics, Communication and Signal Processing (ICECSP-2025)
