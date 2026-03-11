@@ -1,0 +1,4 @@
+acne
+eczema
+fungal
+normal

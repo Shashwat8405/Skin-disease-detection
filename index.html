@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#fafaf8"/>
+<title>Skin Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:     #fafaf8;
+  --white:  #ffffff;
+  --border: #ede8e3;
+  --border2:#f0ece7;
+
+  --ink:    #1a1410;
+  --ink2:   #4a3f35;
+  --muted:  #9c8e82;
+  --faint:  #c8bdb5;
+
+  --sage:   #7a9e7e;
+  --terracotta: #c4714e;
+  --sand:   #e8c99a;
+  --blush:  #e8a0a0;
+  --sky:    #7bafc4;
+
+  --accent: #c4714e;
+
+  --ff:  'Inter', sans-serif;
+  --ffs: 'Lora', serif;
+  --r:   16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--ff);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+.app { max-width: 430px; margin: 0 auto; padding-bottom: 60px; }
+
+/* ── header ─────────────────────────────────────────────── */
+.hdr {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(250,250,248,.94);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hdr-mark {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.hdr-title { flex: 1; }
+.hdr-title h1 {
+  font-family: var(--ffs);
+  font-size: 17px; font-weight: 600; font-style: italic;
+  color: var(--ink); letter-spacing: -.2px;
+}
+.hdr-title p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.ble-tag {
+  font-size: 11px; font-weight: 500; padding: 4px 10px;
+  border-radius: 20px; border: 1px solid; cursor: pointer;
+  transition: all .2s; white-space: nowrap;
+}
+.ble-tag.disconnected { color: var(--muted); border-color: var(--border); background: transparent; }
+.ble-tag.scanning     { color: var(--accent); border-color: var(--sand); background: #fdf6ec; animation: blink 1.3s infinite; }
+.ble-tag.connected    { color: var(--sage);   border-color: #b5d4b8;     background: #f2f8f2; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── stepper ─────────────────────────────────────────────── */
+.steps {
+  display: flex; padding: 0 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+.stp {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; padding: 12px 0; gap: 4px;
+  position: relative;
+}
+.stp:not(:last-child)::after {
+  content: ''; position: absolute;
+  top: 20px; left: 55%; width: 90%;
+  height: 1px; background: var(--border2);
+}
+.stp.done:not(:last-child)::after { background: var(--accent); opacity: .4; }
+.stp.active:not(:last-child)::after { background: var(--border2); }
+.stp-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; color: var(--faint);
+  position: relative; z-index: 1; transition: all .25s;
+}
+.stp.active .stp-dot {
+  border-color: var(--accent); color: var(--accent);
+  background: #fdf6ec;
+}
+.stp.done .stp-dot {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; font-size: 12px;
+}
+.stp-lbl { font-size: 10px; color: var(--faint); font-weight: 500; letter-spacing: .3px; }
+.stp.active .stp-lbl { color: var(--accent); }
+.stp.done .stp-lbl   { color: var(--ink2); }
+
+/* ── sections ────────────────────────────────────────────── */
+.sec { padding: 20px 16px; display: none; }
+.sec.active { display: block; animation: up .25s ease; }
+@keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ── error ───────────────────────────────────────────────── */
+.ebar {
+  display: none; margin-bottom: 12px;
+  padding: 11px 14px; border-radius: 12px;
+  background: #fef2f2; border: 1px solid #fecaca;
+  font-size: 12px; color: #dc2626; font-weight: 500;
+}
+.ebar.show { display: block; }
+
+/* ── card ────────────────────────────────────────────────── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px; margin-bottom: 12px;
+}
+.card-title { font-family: var(--ffs); font-size: 17px; font-weight: 600; font-style: italic; color: var(--ink); margin-bottom: 4px; }
+.card-sub   { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
+
+/* ── intro block ─────────────────────────────────────────── */
+.intro {
+  padding: 28px 20px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.intro h2 {
+  font-family: var(--ffs);
+  font-size: 28px; font-weight: 600; font-style: italic;
+  color: var(--ink); line-height: 1.2; margin-bottom: 8px;
+}
+.intro p { font-size: 13px; color: var(--ink2); line-height: 1.7; }
+
+/* ── buttons ─────────────────────────────────────────────── */
+.btn {
+  width: 100%; padding: 14px;
+  border-radius: 12px; border: none;
+  font-family: var(--ff); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .18s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-fill {
+  background: var(--ink); color: #fff;
+}
+.btn-fill:hover  { background: #2e2520; transform: translateY(-1px); }
+.btn-fill:active { transform: translateY(0); }
+.btn-outline {
+  background: transparent; color: var(--ink2);
+  border: 1px solid var(--border); margin-top: 8px;
+  font-weight: 500; font-size: 13px;
+}
+.btn-outline:hover { border-color: var(--ink2); }
+.btn:disabled { opacity: .35; cursor: not-allowed; transform: none !important; }
+
+/* ── camera zone ─────────────────────────────────────────── */
+.cam {
+  height: 220px; border-radius: 12px;
+  border: 1.5px dashed var(--border);
+  background: #faf8f5;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color .2s;
+  margin-bottom: 14px; overflow: hidden;
+}
+.cam:hover { border-color: var(--accent); }
+.cam img   { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+.cam-ph    { text-align: center; pointer-events: none; }
+.cam-ph .icon { font-size: 36px; margin-bottom: 8px; opacity: .6; }
+.cam-ph .main { font-size: 13px; font-weight: 500; color: var(--ink2); }
+.cam-ph .sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.img-acts { display: flex; gap: 8px; margin-bottom: 12px; }
+.img-acts .btn { flex: 1; padding: 9px; font-size: 12px; }
+#fi { display: none; }
+
+/* ── loader ──────────────────────────────────────────────── */
+.load-wrap {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px; padding: 48px 0;
+}
+.spinner {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-label { font-family: var(--ffs); font-size: 18px; font-style: italic; color: var(--ink); }
+.load-sub   { font-size: 12px; color: var(--muted); }
+
+/* ── score block ─────────────────────────────────────────── */
+.score-block {
+  background: var(--ink);
+  border-radius: var(--r);
+  padding: 28px 20px 24px;
+  text-align: center; margin-bottom: 12px;
+}
+.score-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,.4); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 16px; }
+.score-ring-wrap { display: flex; flex-direction: column; align-items: center; }
+.score-tag {
+  margin-top: 12px; padding: 6px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  background: rgba(255,255,255,.1); color: rgba(255,255,255,.85);
+  border: 1px solid rgba(255,255,255,.15);
+  display: inline-block;
+}
+
+/* ── section divider label ───────────────────────────────── */
+.divlbl {
+  font-size: 10px; font-weight: 600; color: var(--faint);
+  letter-spacing: 1.2px; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* ── disease ─────────────────────────────────────────────── */
+.dis-name {
+  font-family: var(--ffs);
+  font-size: 22px; font-weight: 600; font-style: italic;
+  margin-bottom: 14px; line-height: 1.2;
+}
+.row2  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.lbl12 { font-size: 12px; color: var(--muted); }
+.val12 { font-size: 13px; font-weight: 600; }
+.track {
+  height: 6px; background: var(--border2); border-radius: 3px;
+  overflow: hidden; margin-bottom: 20px;
+}
+.fill  { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+.preds { display: flex; flex-direction: column; gap: 8px; }
+.prow  { display: flex; align-items: center; gap: 8px; }
+.pname { font-size: 12px; color: var(--ink2); width: 62px; font-weight: 500; text-transform: capitalize; }
+.pbar  { flex: 1; height: 5px; background: var(--border2); border-radius: 3px; overflow: hidden; }
+.pfill { height: 100%; border-radius: 3px; background: var(--border); }
+.pfill.top { background: var(--accent); }
+.ppct  { font-size: 11px; color: var(--muted); width: 34px; text-align: right; font-weight: 500; }
+
+/* ── sensors ─────────────────────────────────────────────── */
+.s-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.s-tile {
+  flex: 1; border-radius: 12px;
+  border: 1px solid; padding: 14px 12px;
+  text-align: center;
+}
+.s-ico { font-size: 20px; margin-bottom: 6px; }
+.s-lbl { font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; opacity: .65; }
+.s-val { font-size: 18px; font-weight: 600; }
+.s-sub { font-size: 10px; margin-top: 2px; opacity: .7; font-weight: 500; }
+.swatch {
+  height: 42px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500; color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.25);
+}
+
+/* ── breakdown ───────────────────────────────────────────── */
+.brow {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--border2);
+  font-size: 13px;
+}
+.brow:last-child { border: none; }
+.blbl { color: var(--ink2); font-weight: 400; }
+.bval { font-weight: 600; }
+.btotal {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px; border-radius: 12px; margin-top: 10px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.btlbl { font-family: var(--ffs); font-size: 15px; font-style: italic; color: var(--ink); }
+.btval { font-family: var(--ffs); font-size: 28px; font-weight: 600; font-style: italic; }
+
+/* ── recs ────────────────────────────────────────────────── */
+.rec {
+  display: flex; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border2);
+}
+.rec:last-child { border: none; }
+.rdot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0; margin-top: 7px;
+}
+.rtxt { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+
+/* ── conn badge ──────────────────────────────────────────── */
+.conn-ok {
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-radius: 10px; padding: 9px 14px;
+  font-size: 12px; color: #15803d; font-weight: 500;
+  text-align: center; margin-bottom: 12px;
+}
+.disc {
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 11px; color: var(--muted); line-height: 1.6;
+  text-align: center; margin-bottom: 12px;
+  border: 1px solid var(--border2);
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="hdr">
+    <div class="hdr-mark">🔬</div>
+    <div class="hdr-title">
+      <h1>Skin Analysis</h1>
+      <p>Disease Detection & Health Score</p>
+    </div>
+    <div class="ble-tag disconnected" id="blePill" onclick="toggleBLE()">No Sensor</div>
+  </header>
+
+  <div class="steps">
+    <div class="stp active" id="s1"><div class="stp-dot">1</div><div class="stp-lbl">Sensor</div></div>
+    <div class="stp"        id="s2"><div class="stp-dot">2</div><div class="stp-lbl">Photo</div></div>
+    <div class="stp"        id="s3"><div class="stp-dot">3</div><div class="stp-lbl">Analyze</div></div>
+    <div class="stp"        id="s4"><div class="stp-dot">4</div><div class="stp-lbl">Results</div></div>
+  </div>
+
+  <div style="padding:0 16px"><div class="ebar" id="errorBar"></div></div>
+
+  <!-- Step 1 -->
+  <div class="sec active" id="sec-ble">
+    <div class="intro">
+      <h2>Smart Skin<br/>Analysis</h2>
+      <p>Connect your ESP32 sensor, then capture a skin photo for instant disease detection and a health score.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Connect Sensor</div>
+      <div class="card-sub">Pair your ESP32 over Bluetooth for live temperature and color readings.</div>
+      <button class="btn btn-fill" id="bleBtn" onclick="connectBLE()">Connect to ESP32</button>
+      <button class="btn btn-outline" onclick="skipBLE()">Skip — analyze without sensor</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="sec" id="sec-camera">
+    <div class="conn-ok" id="bleConnectedBadge" style="display:none">ESP32 connected — live sensor data ready</div>
+    <div class="card">
+      <div class="card-title">Capture Photo</div>
+      <div class="card-sub">Hold 10–15 cm from skin in good lighting.</div>
+      <div class="cam" id="camZone" onclick="document.getElementById('fi').click()">
+        <div class="cam-ph" id="camEmpty">
+          <div class="icon">📷</div>
+          <div class="main">Tap to take photo</div>
+          <div class="sub">or select from gallery</div>
+        </div>
+        <img id="previewImg" style="display:none"/>
+      </div>
+      <input type="file" id="fi" accept="image/*" capture="environment" onchange="handleImage(event)"/>
+      <div class="img-acts" id="imgActs" style="display:none">
+        <button class="btn btn-outline" onclick="retake()" style="margin:0">↺ Retake</button>
+      </div>
+      <button class="btn btn-fill" id="analyzeBtn" onclick="analyze()" disabled>Analyze Skin</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="sec" id="sec-loading">
+    <div class="card">
+      <div class="load-wrap">
+        <div class="spinner"></div>
+        <div class="load-label" id="loadingLabel">Analyzing</div>
+        <div class="load-sub" id="loadingSub">Please wait…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="sec" id="sec-result">
+
+    <div class="score-block">
+      <div class="score-label">Health Score</div>
+      <div class="score-ring-wrap" id="scoreWrap"></div>
+    </div>
+
+    <div class="card">
+      <div class="divlbl">Detection</div>
+      <div id="diseaseContent"></div>
+    </div>
+
+    <div class="card">
+      <div class="divlbl">Sensor Readings</div>
+      <div id="sensorContent"></div>
+    </div>
+
+    <div class="card">
+      <div class="divlbl">Score Breakdown</div>
+      <div id="breakdownContent"></div>
+    </div>
+
+    <div class="card">
+      <div class="divlbl">Recommendations</div>
+      <div id="recsContent"></div>
+    </div>
+
+    <div class="disc">For educational purposes only. Consult a dermatologist for medical advice.</div>
+    <button class="btn btn-fill" onclick="reset()">New Analysis</button>
+
+  </div>
+</div>
+
+<script>
+const SRV='',BS='12345678-1234-1234-1234-123456789abc',
+      CS='12345678-1234-1234-1234-123456789abd',CC='12345678-1234-1234-1234-123456789abe';
+let dev=null,srv=null,sc=null,cc=null,ble=false,img64=null;
+
+function showErr(m){const e=document.getElementById('errorBar');e.textContent='⚠ '+m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),5000)}
+
+function setStep(n){
+  ['s1','s2','s3','s4'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.className='stp'+(i+1<n?' done':i+1===n?' active':'');
+    el.querySelector('.stp-dot').textContent=i+1<n?'✓':i+1;
+  });
+  ['sec-ble','sec-camera','sec-loading','sec-result'].forEach((id,i)=>{
+    document.getElementById(id).className='sec'+(i+1===n?' active':'');
+  });
+}
+function setPill(s){
+  const p=document.getElementById('blePill');p.className='ble-tag '+s;
+  p.textContent=s==='connected'?'Connected':s==='scanning'?'Scanning…':s==='connecting'?'Connecting…':'No Sensor';
+}
+function toggleBLE(){if(!ble)connectBLE()}
+
+async function connectBLE(){
+  if(!navigator.bluetooth){showErr('Web Bluetooth requires Chrome on Android.');return}
+  const b=document.getElementById('bleBtn');b.disabled=true;b.textContent='Scanning…';setPill('scanning');
+  try{
+    dev=await navigator.bluetooth.requestDevice({filters:[{name:'SkinSensor'}],optionalServices:[BS]});
+    setPill('connecting');b.textContent='Connecting…';
+    srv=await dev.gatt.connect();
+    const sv=await srv.getPrimaryService(BS);
+    sc=await sv.getCharacteristic(CS);cc=await sv.getCharacteristic(CC);
+    ble=true;setPill('connected');
+    dev.addEventListener('gattserverdisconnected',()=>{ble=false;setPill('disconnected')});
+    goCamera(true);
+  }catch(e){showErr('Connection failed: '+e.message);b.disabled=false;b.textContent='Connect to ESP32';setPill('disconnected')}
+}
+function skipBLE(){goCamera(false)}
+function goCamera(ws){document.getElementById('bleConnectedBadge').style.display=ws?'block':'none';setStep(2)}
+
+async function readSensors(){
+  return new Promise(async(res,rej)=>{
+    const t=setTimeout(()=>rej(new Error('Sensor timeout')),8000);
+    await sc.startNotifications();
+    sc.addEventListener('characteristicvaluechanged',function h(e){
+      clearTimeout(t);sc.removeEventListener('characteristicvaluechanged',h);sc.stopNotifications();
+      try{res(JSON.parse(new TextDecoder().decode(e.target.value)))}catch(er){rej(er)}
+    });
+    await cc.writeValue(new TextEncoder().encode('READ'));
+  });
+}
+
+function handleImage(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const u=ev.target.result;img64=u.split(',')[1];
+    const i=document.getElementById('previewImg');i.src=u;i.style.display='block';
+    document.getElementById('camEmpty').style.display='none';
+    document.getElementById('imgActs').style.display='flex';
+    document.getElementById('analyzeBtn').disabled=false;
+  };r.readAsDataURL(f);
+}
+function retake(){
+  img64=null;
+  document.getElementById('previewImg').style.display='none';
+  document.getElementById('camEmpty').style.display='flex';
+  document.getElementById('imgActs').style.display='none';
+  document.getElementById('analyzeBtn').disabled=true;
+  document.getElementById('fi').value='';
+}
+
+async function analyze(){
+  if(!img64)return;setStep(3);
+  const L=document.getElementById('loadingLabel'),S=document.getElementById('loadingSub');
+  let sens={temperature:33,red:180,green:140,blue:110,redness:42};
+  if(ble){L.textContent='Reading sensors';S.textContent='Getting temperature & color…';
+    try{sens=await readSensors()}catch(e){console.warn('fallback',e.message)}}
+  L.textContent='Analyzing';S.textContent='Running detection model…';
+  try{
+    const r=await fetch(`${SRV}/analyze`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:img64,temperature:sens.temperature??33,red:sens.red??180,
+        green:sens.green??140,blue:sens.blue??110,redness:sens.redness??42})});
+    if(!r.ok){const e=await r.json();throw new Error(e.error||'Server error')}
+    renderResult(await r.json());setStep(4);
+  }catch(e){showErr('Analysis failed: '+e.message);setStep(2)}
+}
+
+function renderResult(data){
+  const{disease,skin_score,sensors,score_breakdown}=data;
+  const sc2=skin_score.score,col=skin_score.color;
+  const R=56,cx=68,cy=68,C=2*Math.PI*R,d=(sc2/100)*C;
+
+  /* score ring — white on dark */
+  document.getElementById('scoreWrap').innerHTML=`
+    <svg width="136" height="136" viewBox="0 0 136 136" style="overflow:visible">
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="8"/>
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="8"
+        stroke-dasharray="${d} ${C}" stroke-dashoffset="${C*.25}" stroke-linecap="round"
+        style="transition:stroke-dasharray 1.2s ease"/>
+      <text x="${cx}" y="${cy+6}" text-anchor="middle"
+        font-family="Lora" font-size="44" font-weight="600" font-style="italic"
+        fill="white">${sc2}</text>
+      <text x="${cx}" y="${cy+24}" text-anchor="middle"
+        font-family="Inter" font-size="11" font-weight="400"
+        fill="rgba(255,255,255,.45)">/100</text>
+    </svg>
+    <div class="score-tag">${skin_score.label}</div>`;
+
+  /* disease */
+  const dc=disease.confidence>80?'#15803d':disease.confidence>60?'#b45309':'#be123c';
+  const preds=Object.entries(disease.all_predictions).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('diseaseContent').innerHTML=`
+    <div class="dis-name" style="color:${dc}">${disease.label}</div>
+    <div class="row2"><span class="lbl12">Confidence</span><span class="val12" style="color:${dc}">${disease.confidence}%</span></div>
+    <div class="track"><div class="fill" style="width:${disease.confidence}%;background:${dc}"></div></div>
+    <div class="preds">${preds.map(([k,v],i)=>`
+      <div class="prow">
+        <span class="pname">${k}</span>
+        <div class="pbar"><div class="pfill${i===0?' top':''}" style="width:${v}%"></div></div>
+        <span class="ppct">${v}%</span>
+      </div>`).join('')}</div>`;
+
+  /* sensors */
+  const ts=sensors.temperature.status;
+  const T={
+    bg:ts==='normal'?'#f0fdf4':ts==='elevated'?'#fffbeb':'#fff1f2',
+    bc:ts==='normal'?'#bbf7d0':ts==='elevated'?'#fde68a':'#fecaca',
+    c:ts==='normal'?'#15803d':ts==='elevated'?'#b45309':'#be123c'
+  };
+  const cs=sensors.color.status;
+  const Co={
+    bg:cs==='normal'?'#f0fdf4':cs==='mild_redness'?'#fffbeb':cs==='pale'?'#f8fafc':'#fff1f2',
+    bc:cs==='normal'?'#bbf7d0':cs==='mild_redness'?'#fde68a':cs==='pale'?'#e2e8f0':'#fecaca',
+    c:cs==='normal'?'#15803d':cs==='mild_redness'?'#b45309':cs==='pale'?'#64748b':'#be123c'
+  };
+  document.getElementById('sensorContent').innerHTML=`
+    <div class="s-row">
+      <div class="s-tile" style="background:${T.bg};border-color:${T.bc}">
+        <div class="s-ico">🌡️</div>
+        <div class="s-lbl" style="color:${T.c}">Temperature</div>
+        <div class="s-val" style="color:${T.c}">${sensors.temperature.value}°C</div>
+        <div class="s-sub" style="color:${T.c}">${sensors.temperature.status}</div>
+      </div>
+      <div class="s-tile" style="background:${Co.bg};border-color:${Co.bc}">
+        <div class="s-ico">🎨</div>
+        <div class="s-lbl" style="color:${Co.c}">Skin Tone</div>
+        <div class="s-val" style="color:${Co.c};font-size:13px">${sensors.color.status.replace(/_/g,' ')}</div>
+        <div class="s-sub" style="color:${Co.c}">Redness ${sensors.color.redness_index}%</div>
+      </div>
+    </div>
+    <div class="swatch" style="background:rgb(${sensors.color.r},${sensors.color.g},${sensors.color.b})">
+      RGB ${sensors.color.r} · ${sensors.color.g} · ${sensors.color.b}
+    </div>`;
+
+  /* breakdown */
+  const bd=score_breakdown;
+  const sg=v=>v>0?`<span style="color:#15803d">+${v}</span>`:v<0?`<span style="color:#be123c">${v}</span>`:`<span style="color:var(--faint)">0</span>`;
+  document.getElementById('breakdownContent').innerHTML=`
+    <div class="brow"><span class="blbl">Base score</span><span class="bval">${bd.base_score}</span></div>
+    <div class="brow"><span class="blbl">Confidence</span><span class="bval">${sg(bd.confidence_boost)}</span></div>
+    <div class="brow"><span class="blbl">Temperature</span><span class="bval">${sg(bd.temp_modifier)}</span></div>
+    <div class="brow"><span class="blbl">Color / redness</span><span class="bval">${sg(bd.color_modifier)}</span></div>
+    <div class="btotal">
+      <span class="btlbl">Final Score</span>
+      <span class="btval" style="color:var(--accent)">${sc2}</span>
+    </div>`;
+
+  /* recs */
+  document.getElementById('recsContent').innerHTML=
+    disease.recommendations.map(r=>`
+      <div class="rec"><div class="rdot"></div><div class="rtxt">${r}</div></div>`).join('');
+}
+function reset(){retake();setStep(ble?2:1)}
+</script>
+</body>
+</html>
